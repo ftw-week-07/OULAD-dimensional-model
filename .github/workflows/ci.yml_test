@@ -1,0 +1,60 @@
+name: OULAD CI Quality Gates
+
+on:
+  push:
+    branches:
+      - main
+      - "feature/**"
+      - "ci/**"
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-project:
+    name: Validate OULAD project
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check required directories
+        run: |
+          for directory in src tests docs dashboard; do
+            if [ ! -d "$directory" ]; then
+              echo "Missing required directory: $directory"
+              exit 1
+            fi
+          done
+          echo "Required directories found."
+
+      - name: Check SQL source files
+        run: |
+          if ! find src -type f -name "*.sql" | grep -q .; then
+            echo "No SQL files found inside src."
+            exit 1
+          fi
+          echo "SQL source files found."
+
+      - name: Check test files
+        run: |
+          if ! find tests -type f | grep -q .; then
+            echo "No test files found inside tests."
+            exit 1
+          fi
+          echo "Test files found."
+
+      - name: Check README documentation
+        run: |
+          if [ ! -s README.md ]; then
+            echo "README.md is missing or empty."
+            exit 1
+          fi
+          echo "README.md is present and not empty."
